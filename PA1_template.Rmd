@@ -8,18 +8,68 @@ output:
 
 ## Loading and preprocessing the data
 
-
-
+###read raw data after fork in github and git clone in Git bash
+```{r}
+RData <- unzip("C:/Users/Kati/RepData_PeerAssessment1/activity.zip")
+RData<- read.csv("./activity.csv", header=TRUE)
+```
 ## What is mean total number of steps taken per day?
-
-
-
+1 Summarize steps by day and store in Sdate   
+2 Create a histogram of the  sum steps per day   
+3 Calculate the mean and the median of the total number of steps per day   
+```{r}
+Sdata<-aggregate(steps~date, data=RData, FUN="sum")
+hist(Sdata$steps)
+mean(Sdata$steps)
+median(Sdata$steps)
+```
 ## What is the average daily activity pattern?
-
-
-
+1 Create data set for eveluating average daly activity pattern  
+2 Plot the average daly activity pattern by creating time series plot  
+3 Find the that 5-minutes interval which has a maximum number of steps on average acrass all days
+```{r}
+SDMData<-aggregate(steps~interval, data=RData,FUN="mean")
+plot.ts(SDMData$steps, main="average daly activity pattern", ylab="average stpes", xlab="5 minute interval")
+which.max(SDMData$steps)
+```
 ## Imputing missing values
-
+1 Calculate  the total number of missing values in the dataset  
+2 Fill missing value with corresponding intervals mean value  
+3 Summarize steps by day and store in SNdate for the filled data set  
+4 Create a histogram of the  sum steps per day  
+5 Calculate the mean and the median of the total number of steps per day  
+```{r}
+sum(is.na(RData[1]))
+library(dplyr)
+NData<-RData
+sapply(unique(RData$interval), function(x)
+  NData[!complete.cases(NData)&(NData$interval==x),1]<<-SDMData$steps[SDMData$interval==x])
+SNdata<-aggregate(steps~date, data=NData, FUN="sum")
+hist(SNdata$steps)
+mean(SNdata$steps)
+median(SNdata$steps)
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+1 Create a new factor variable in the dataset with two levels – “weekday”
+and “weekend” indicating whether a given date is a weekday or weekend
+day.  
+2 Make a panel plot containing a time series plot (i.e. type = "l") of the
+5-minute interval (x-axis) and the average number of steps taken, averaged
+across all weekday days or weekend days (y-axis).  
+```{r}
+NData$date<-as.Date(NData$date,"%Y-%m-%d")
+NData$weektime <- as.factor(ifelse(weekdays(NData$date) %in% 
+                c("vasárnap","szombat"),"weekend", "weekday"))
+SDMNData<-aggregate(steps~interval+weektime, data=NData,FUN="mean")
+library("lattice")
+p <- xyplot(steps ~ interval | factor(weektime), data=SDMNData, 
+       type = 'l',
+       main="Average Number of Steps Taken 
+       \nAveraged Across All Weekday Days or Weekend Days",
+       xlab="5-Minute Interval (military time)",
+       ylab="Average Number of Steps Taken")
+print (p) 
+```
